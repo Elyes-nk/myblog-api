@@ -1,5 +1,6 @@
 const User = require("../../models/User");
 const CryptoJS = require("crypto-js");
+const jwt = require("jsonwebtoken");
 
 module.exports = {
   Query: {
@@ -9,42 +10,34 @@ module.exports = {
     getUser: (parent, args) => {
       return User.findById(args.id).catch((err) => console.log(err));
     },
-    login: (parent, args) => {
-      try {
-        const user = User.findOne({ email: args.email });
-        !user && res.status(401).json("Wrong password or username!");
+    login: async (parent, args) => {
+      const user = await User.findOne({ username: args.username });
+      if (!user) throw new Error("Wrong credentials!");
 
-        const bytes = CryptoJS.AES.decrypt(
-          user.password,
-          process.env.SECRET_KEY
-        );
-        const originalPassword = bytes.toString(CryptoJS.enc.Utf8);
+      const bytes = CryptoJS.AES.decrypt(user.password, process.env.SECRET_KEY);
+      const originalPassword = bytes.toString(CryptoJS.enc.Utf8);
+      if (originalPassword !== args.password)
+        throw new Error("Wrong credentials!");
 
-        originalPassword !== req.body.password &&
-          res.status(401).json("Wrong password or username!");
-
-        const accessToken = jwt.sign(
-          { id: user._id, isAdmin: user.isAdmin },
-          process.env.SECRET_KEY,
-          { expiresIn: "5d" }
-        );
-
-        const { password, ...info } = user._doc;
-        return { ...info, accessToken };
-      } catch (e) {
-        // eslint-disable-next-line
-        console.log("## ERROR:", e);
-      }
+      const accessToken = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
+        expiresIn: "5d",
+      });
+      const { password, ...info } = user._doc;
+      return { ...info, accessToken };
+      // } catch (e) {
+      //   // eslint-disable-next-line
+      //   console.log("## ERROR:", e);
+      // }
     },
   },
   Mutation: {
     createUser: (parent, args) => {
       const { password, ...otherArgs } = args;
-      const pass =  CryptoJS.AES.encrypt(
-        req.body.password,
+      const pass = CryptoJS.AES.encrypt(
+        args.password,
         process.env.SECRET_KEY
-      ).toString()
-      const newUser = new User({ ...otherArgs, pass});
+      ).toString();
+      const newUser = new User({ ...otherArgs, password: pass });
       return newUser.save();
     },
     updateUser: (parent, args) => {
