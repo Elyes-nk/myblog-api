@@ -18,8 +18,8 @@ const Auth = require("../graphQl/auth/auth");
 
 async function startServer() {
   const graphQlServer = new ApolloServer({
-    typeDefs: { ...PostSchema, ...UserSchema },
-    resolvers: { ...PostResolvers, ...UserResolvers },
+    typeDefs: [PostSchema, UserSchema],
+    resolvers: [PostResolvers, UserResolvers],
     context: Auth,
   });
   await graphQlServer.start();

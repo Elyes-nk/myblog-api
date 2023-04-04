@@ -1,16 +1,20 @@
 const { gql } = require("apollo-server-express");
 
 module.exports = gql`
+  scalar Date
+
   type Post {
+    _id: ID!
     title: String
     desc: String
+    cat: String
     img: String
-    desc: String
-    draft: String
-    user: ID
+    draft: Boolean
+    updatedAt: Date
+    user: User
   }
   type Query {
-    getPosts: [Post]
+    getPosts(cat: String, user: ID, withDraft: Boolean): [Post]
     getPost(id: ID!): Post
   }
   type Mutation {
@@ -18,7 +22,6 @@ module.exports = gql`
       title: String
       desc: String
       img: String
-      desc: String
       cat: String
       draft: Boolean
       user: ID!
@@ -28,7 +31,6 @@ module.exports = gql`
       title: String
       desc: String
       img: String
-      desc: String
       cat: String
       draft: Boolean
     ): Post!

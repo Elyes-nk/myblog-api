@@ -5,10 +5,10 @@ const jwt = require("jsonwebtoken");
 module.exports = {
   Query: {
     getUsers: () => {
-      return User.find().catch((err) => console.log(err));
+      return User.find().populate("posts");
     },
     getUser: (parent, args) => {
-      return User.findById(args.id).catch((err) => console.log(err));
+      return User.findById(args.id).populate("posts");
     },
     login: async (parent, args) => {
       const user = await User.findOne({ username: args.username });
@@ -23,11 +23,7 @@ module.exports = {
         expiresIn: "5d",
       });
       const { password, ...info } = user._doc;
-      return { ...info, accessToken };
-      // } catch (e) {
-      //   // eslint-disable-next-line
-      //   console.log("## ERROR:", e);
-      // }
+      return { ...info, accessToken }; 
     },
   },
   Mutation: {

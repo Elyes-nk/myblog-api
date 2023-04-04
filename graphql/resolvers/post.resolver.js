@@ -1,12 +1,25 @@
+const mongoose = require("mongoose");
 const Post = require("../../models/Post");
 
 module.exports = {
   Query: {
-    getPosts: () => {
-      return Post.find().catch(err).populate("user");
+    getPosts: (parent, args = {}) => {
+      const { cat, user, withDraft } = args;
+      const options = {};
+      // By default exclude draft posts
+      if(!withDraft){
+        options.draft = false
+      }
+      if (cat) {
+        options.cat = cat;
+      }
+      if (user) {
+        options.user = mongoose.Types.ObjectId(user);
+      }
+      return Post.find(options).populate("user").sort({ updatedAt: -1 });
     },
     getPost: (parent, args) => {
-      return Post.findById(args.id).catch(err).populate("user");
+      return Post.findById(args.id).populate("user");
     },
   },
   Mutation: {
@@ -15,20 +28,16 @@ module.exports = {
       return newPost.save();
     },
     updatePost: (parent, args) => {
-      // const movie = Movie.find(movie => movie.id === args.id);
-      // if (!movie) throw new Error('Movie not found');
-      // // This way, only the fields that are passed-in will be changed.
-      // if (typeof args.data.name === "string") movie.name = args.data.name;
-      // if (typeof args.data.description === "string") movie.description = args.data.description;
-      // if (typeof args.data.price === "double") movie.price = args.data.price;
-      // return movie;
-      // return Movie.findByIdAndUpdate(id, { title: title, description: description, img: img, price: price });
+      return Post.findByIdAndUpdate(
+        args.id,
+        {
+          $set: args.body,
+        },
+        { new: true }
+      );
     },
     deletePost: (parent, args) => {
-      // const movieIndex = Movie.filter((movie) => user.id !== args.id);
-      // if (movieIndex === -1) throw new Error('Movie not found');
-      // const movie = Movie.splice(movieIndex, 1);
-      // return movie[0];
+      return Post.findByIdAndDelete(args.id);
     },
   },
 };

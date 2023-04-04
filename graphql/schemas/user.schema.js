@@ -7,7 +7,7 @@ module.exports = gql`
     email: String
     password: String
     profilePic: String
-    posts: [ID]
+    posts: [Post]
     accessToken: String
   }
   type Query {
